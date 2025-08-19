@@ -10,7 +10,7 @@
   <HighResolutionIconUrl DefaultValue="https://www.contoso.com/assets/icon-64.png"/>
   <SupportUrl DefaultValue="https://www.contoso.com/help"/>
   <AppDomains>
-    <AppDomain>https://www.contoso.com</AppDomain>
+    <AppDomain>https://eichenbergerr.github.io/EssaiAddin01/</AppDomain>
   </AppDomains>
   <Hosts>
     <Host Name="Document"/>
