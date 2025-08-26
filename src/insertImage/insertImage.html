@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Complément Word — Image & Légende</title>
+
+    <!-- Office JavaScript API -->
+    <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+
+    <!-- Fluent UI Core (Fabric) -->
+    <link
+      rel="stylesheet"
+      href="https://res-1.cdn.office.net/files/fabric-cdn-prod_20230815.002/office-ui-fabric-core/11.1.0/css/fabric.min.css"
+    />
+
+    <!-- Styles -->
+    <link href="insertImage.css" rel="stylesheet" type="text/css" />
+  </head>
+
+  <body class="ms-font-m ms-welcome ms-Fabric">
+    <header class="ms-welcome__header ms-bgColor-neutralLighter">
+      <img class="header-logo" src="../../assets/logo-filled.png" alt="Logo" />
+      <h1 class="ms-font-su">Bienvenue</h1>
+    </header>
+
+    <section id="sideload-msg" class="ms-welcome__main">
+      <h2 class="ms-font-xl">
+        Merci de
+        <a target="_blank" href="https://learn.microsoft.com/office/dev/add-ins/testing/test-debug-office-add-ins#sideload-an-office-add-in-for-testing">sideload</a>
+        votre complément pour afficher le panneau.
+      </h2>
+    </section>
+
+    <main id="app-body" class="ms-welcome__main" style="display: none;">
+      <h2 class="ms-font-xl">Exercice : Image & Légende centrée</h2>
+
+      <ul class="ms-List ms-welcome__features">
+        <li class="ms-ListItem">
+          <i class="ms-Icon ms-Icon--Ribbon ms-font-xl" aria-hidden="true"></i>
+          <span class="ms-font-m">Prépare un document avec un emplacement dédié à l’image.</span>
+        </li>
+        <li class="ms-ListItem">
+          <i class="ms-Icon ms-Icon--AlignHorizontalCenter ms-font-xl" aria-hidden="true"></i>
+          <span class="ms-font-m">Ajoute une légende sous l’image et centre-la horizontalement.</span>
+        </li>
+        <li class="ms-ListItem">
+          <i class="ms-Icon ms-Icon--CheckList ms-font-xl" aria-hidden="true"></i>
+          <span class="ms-font-m">Vérifie automatiquement : image, légende, centrage, format « Figure X : … ».</span>
+        </li>
+      </ul>
+
+      <div class="helper">
+        Conseil : insérez l’image dans l’encart « IMAGE_PLACEHOLDER », puis ajoutez une légende.
+      </div>
+
+      <!-- 🆕 Champ de saisie pour le texte de la légende -->
+      <div style="width:100%;max-width:520px;margin-top:12px;">
+        <label for="caption-desc" class="ms-font-m">Texte de la légende (après « Figure X : ») :</label>
+        <input id="caption-desc" type="text" class="ms-font-m"
+               placeholder="Description de l’image"
+               style="width:100%;padding:8px;border:1px solid #e1e1e1;border-radius:6px;margin-top:6px;" />
+        <div class="helper">Le numéro « X » est généré automatiquement.</div>
+      </div>
+
+      <div class="actions" role="group" aria-label="Actions exercice">
+        <button id="btn-init" class="ms-welcome__action ms-Button ms-Button--hero ms-font-m" type="button">
+          <span class="ms-Button-label">Initialiser le document</span>
+        </button>
+
+        <button id="btn-caption" class="ms-welcome__action ms-Button ms-Button--hero ms-font-m" type="button">
+          <span class="ms-Button-label">Ajouter la légende</span>
+        </button>
+
+        <button id="btn-validate" class="ms-welcome__action ms-Button ms-Button--hero ms-font-m" type="button">
+          <span class="ms-Button-label">Valider l’exercice</span>
+        </button>
+      </div>
+
+      <div id="report" aria-live="polite" aria-atomic="true"></div>
+    </main>
+
+    <!-- Script applicatif unique -->
+    <script src="./insertImage.js"></script>
+  </body>
+</html>
