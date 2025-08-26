@@ -176,18 +176,6 @@ async function initDocConfirmed(withClear) {
         Word.InsertLocation.end
       );
 
-      const h2 = body.insertParagraph("Consignes détaillées :", Word.InsertLocation.end);
-      try { h2.styleBuiltIn = Word.BuiltInStyleName.heading2; } catch (_) { }
-
-      [
-        "1) Insérer une image à l’emplacement indiqué ci-dessous.",
-        "2) Ajouter une légende sous l’image (Références > Insérer une légende, ou via le bouton du complément).",
-        "3) Centrer la légende horizontalement.",
-        "4) (Optionnel) Inclure un numéro automatique : « Figure 1 : … ».",
-      ].forEach((s) => body.insertParagraph(s, Word.InsertLocation.end));
-
-      body.insertParagraph("", Word.InsertLocation.end);
-
       const cc = await getOrCreateImagePlaceholder(context);
       const ccRange = cc.getRange();
       ccRange.load("text");
