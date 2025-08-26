@@ -5,6 +5,7 @@ const WEX = {
   PLACEHOLDER_MARK: "=== EMPLACEMENT IMAGE ===",
   EXPECTED_CAPTION_PREFIX: "Figure",
   EXACT_CAPTION_OPTIONAL: "", // si non vide -> validation stricte
+  REQUIRE_REAL_CAPTION: true,
 };
 
 let __busyInit = false;
@@ -40,33 +41,56 @@ async function getOrCreateImagePlaceholder(context) {
   return cc;
 }
 
+// Détecte une vraie légende Word dans le CC : style "Légende/Caption" + champ SEQ Figure/Table/Equation
 async function findCaptionParagraphInCC(context, cc) {
-  const r = cc.getRange();
-  const paras = r.paragraphs;
+  const range = cc.getRange();
+  const paras = range.paragraphs;
   paras.load("items");
   await context.sync();
 
   if (!paras.items || paras.items.length === 0) return null;
 
-  // Charge texte + alignement (compat large, pas de styleBuiltIn ici)
-  for (const p of paras.items) p.load("text,alignment");
-  await context.sync();
-
-  // 1) Cherche une vraie "Figure X ..."
+  // On charge texte, alignement, style + on prépare l'OOXML
+  const ooxmlReqs = [];
   for (const p of paras.items) {
-    const t = (p.text || "").trim();
-    if (t && isCaptionText(t)) return p;
+    p.load("text,alignment,style");
+    ooxmlReqs.push(p.getOoxml());
+  }
+  await context.sync(); // nécessaire pour remplir style/text ET ooxmlReqs[*].value
+
+  let best = null;
+
+  for (let i = 0; i < paras.items.length; i++) {
+    const p = paras.items[i];
+    const txt = (p.text || "").trim();
+    const style = (p.style || "").toLowerCase();
+    const ooxml = (ooxmlReqs[i].value || "");
+
+    // 1) Style de légende (FR/EN)
+    const styleOk = style.includes("légende") || style.includes("caption");
+
+    // 2) Champ SEQ Figure/Table/Equation (vraie légende numérotée)
+    const hasSEQ = /\bSEQ\s+(Figure|Table|Equation|Équation)\b/i.test(ooxml);
+
+    // 3) Texte qui ressemble à "Figure 1 : ..."
+    const looksLike = isCaptionText(txt);
+
+    // Priorité : (style && SEQ) > (style && looksLike) > (looksLike seul)
+    if (styleOk && hasSEQ) {
+      best = { para: p, styleOk: true, hasSEQ: true, text: txt };
+      break;
+    }
+    if (!best && styleOk && looksLike) {
+      best = { para: p, styleOk: true, hasSEQ: false, text: txt };
+    }
+    if (!best && looksLike) {
+      best = { para: p, styleOk: false, hasSEQ: false, text: txt };
+    }
   }
 
-  // 2) Fallback: premier paragraphe non vide après l'image (souvent la légende
-  // par défaut "Figure 1")
-  for (const p of paras.items) {
-    const t = (p.text || "").trim();
-    if (t.length > 0) return p;
-  }
-
-  return null;
+  return best; // null ou { para, styleOk, hasSEQ, text }
 }
+
 
 
 function isCaptionText(text) {
@@ -246,17 +270,28 @@ async function validateDoc() {
       const hasImage = pics.items && pics.items.length > 0;
       results.push(line(hasImage, hasImage ? "Image détectée à l’emplacement prévu." : "Aucune image insérée."));
 
-      const legendPara = await findCaptionParagraphInCC(context, cc);
-      if (!legendPara) {
+      const cap = await findCaptionParagraphInCC(context, cc);
+      if (!cap || !cap.para) {
         results.push(line(false, "Aucune légende détectée sous l’image."));
         showReport(results.join(""));
         return;
       }
 
-      const centered = isCentered(legendPara);
+      // Centrage
+      const centered = isCentered(cap.para);
       results.push(line(centered, centered ? "La légende est centrée." : "La légende n’est pas centrée."));
 
-      const legendText = (legendPara.text || "").trim();
+      // Qualité de la légende (vraie légende Word ?)
+      if (cap.styleOk && cap.hasSEQ) {
+        results.push(line(true, "Vraie légende Word détectée (style + champ SEQ)."));
+      } else if (cap.styleOk && !cap.hasSEQ) {
+        results.push(line(false, "Style de légende présent, mais pas de champ SEQ (numérotation)."));
+      } else if (!cap.styleOk && cap.text) {
+        results.push(line(false, "Texte ressemble à une légende, mais ce n’est pas une légende Word."));
+      }
+
+      // Texte conforme ?
+      const legendText = (cap.text || "").trim();
       let captionOk = false;
       let captionMsg = "";
 
@@ -273,9 +308,13 @@ async function validateDoc() {
       }
       results.push(line(captionOk, captionMsg));
 
-      const allOk = hasImage && centered && (WEX.EXACT_CAPTION_OPTIONAL ? legendText === WEX.EXACT_CAPTION_OPTIONAL : captionOk);
+      // Réussite globale
+      const genuineOk = cap.styleOk && cap.hasSEQ; // vraie légende Word
+      const allOk = hasImage && centered && captionOk && (WEX.REQUIRE_REAL_CAPTION ? genuineOk : true);
+
       results.unshift(`<h3>${allOk ? "✅ Validation réussie" : "⚠️ Validation incomplète"}</h3>`);
       showReport(results.join(""));
+
     });
   } catch (err) {
     console.error(err);

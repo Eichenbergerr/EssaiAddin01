@@ -206,16 +206,8 @@
             <div class="title">
                 <h1 id="insertImage-title">insertImage — Tutoriel</h1>
                 <span class="badge">Complément Word</span>
-                <span class="badge">Durée ~10&nbsp;min</span>
+                <span class="badge">Durée ~5&nbsp;min</span>
             </div>
-            <nav aria-label="Plan de la page">
-                <a href="#objectif">Objectif</a>
-                <a href="#prerequis">Prérequis</a>
-                <a href="#demarrage">Démarrage</a>
-                <a href="#etapes">Étapes</a>
-                <a href="#verification">Vérifier</a>
-                <a href="#faq">FAQ</a>
-            </nav>
         </div>
     </header>
 
@@ -229,11 +221,6 @@
                 valide votre travail et que l’icône passe de <span aria-label="échec">❌</span> à <span
                     aria-label="réussi">✔️</span>.
             </p>
-            <div class="callout">
-                <strong>Important :</strong> utilisez la <em>commande officielle de légende</em> de Word afin que la
-                légende soit
-                liée à l’image (et non un simple texte tapé au clavier).
-            </div>
         </section>
 
         <section id="prerequis" class="card" aria-labelledby="h-prerequis">
@@ -244,135 +231,12 @@
                 <li>Accès à la page du complément : <a href="./insertImage.html">ouvrir
                         <strong>insertImage.html</strong></a>.</li>
                 <li>Manifest pour sideload (Word Web) :
-                    <a href="https://github.com/votrepseudo/EssaiAddin01/blob/main/manifest.xml">manifest.xml</a>
-                    <span class="note">— remplacez <em>votrepseudo</em> si besoin.</span>
+                    <a href="https://github.com/Eichenbergerr/EssaiAddin01/blob/main/manifest.xml">manifest.xml</a>
                 </li>
-            </ul>
-        </section>
-
-        <section id="demarrage" class="card" aria-labelledby="h-demarrage">
-            <h2 id="h-demarrage">Démarrage rapide</h2>
-            <div class="grid">
-                <div>
-                    <h3>1) Ouvrir le document d’exercice</h3>
-                    <ol>
-                        <li>Visitez la page du complément : <a href="./insertImage.html">insertImage.html</a>.</li>
-                        <li>Cliquez sur <kbd>Charger la situation de départ</kbd> pour générer le document avec
-                            l’emplacement prévu.</li>
-                    </ol>
-                    <figure>
-                        <img src="./assets/insertImage-01.png"
-                            alt="Bouton Charger la situation de départ sur la page insertImage" width="100%"
-                            loading="lazy">
-                        <figcaption>insertImage-01 : création du document de départ.</figcaption>
-                    </figure>
-                </div>
-                <div>
-                    <h3>2) (Si besoin) Sideload dans Word Web</h3>
-                    <ol>
-                        <li>Dans Word Web : <kbd>Insertion</kbd> → <kbd>Compléments</kbd> → <kbd>Téléverser mon
-                                complément</kbd>.</li>
-                        <li>Sélectionnez <em>manifest.xml</em> depuis GitHub (téléchargez-le d’abord si nécessaire).
-                        </li>
-                    </ol>
-                    <figure>
-                        <img src="./assets/insertImage-02.png" alt="Ajout du complément via manifest dans Word Web"
-                            width="100%" loading="lazy">
-                        <figcaption>insertImage-02 : ajout du complément (Word Web).</figcaption>
-                    </figure>
-                </div>
-            </div>
-        </section>
-
-        <section id="etapes" class="card" aria-labelledby="h-etapes">
-            <h2 id="h-etapes">Réalisation — étapes guidées</h2>
-
-            <h3>A. Insérer une image à l’emplacement prévu</h3>
-            <ol>
-                <li>Repérez le texte <code>=== EMPLACEMENT IMAGE ===</code> dans le document.</li>
-                <li>Placez le curseur juste sous cette ligne.</li>
-                <li>Insérez une image : <kbd>Insertion</kbd> → <kbd>Images</kbd> (depuis votre appareil ou banque
-                    d’images).</li>
-            </ol>
-            <figure>
-                <img src="./assets/insertImage-03.png" alt="Insertion d’une image à l’emplacement indiqué" width="100%"
-                    loading="lazy">
-                <figcaption>insertImage-03 : image insérée sous l’emplacement.</figcaption>
-            </figure>
-
-            <h3>B. Ajouter une légende liée à l’image</h3>
-            <p class="note">Procédez avec la commande de légende intégrée pour que Word associe la légende à l’objet
-                image.</p>
-            <details>
-                <summary><strong>Word Bureau (Windows/Mac)</strong></summary>
-                <ol>
-                    <li>Cliquez sur l’image pour la sélectionner.</li>
-                    <li>Allez dans <kbd>Références</kbd> → <kbd>Insérer une légende</kbd>.</li>
-                    <li>Vérifiez que le <em>Libellé</em> est de type <em>Figure</em>. Ajoutez le texte descriptif (court
-                        et précis).</li>
-                    <li>Validez. La légende apparaît liée à l’image (style “Légende”).</li>
-                </ol>
-            </details>
-            <details>
-                <summary><strong>Word Web</strong> (si l’option est disponible)</summary>
-                <ol>
-                    <li>Sélectionnez l’image.</li>
-                    <li>Utilisez la commande de légende (ou ouvrez le document dans Word Bureau si la commande n’est pas
-                        présente).</li>
-                </ol>
-            </details>
-            <figure>
-                <img src="./assets/insertImage-04.png" alt="Insertion d’une légende de type Figure associée à l’image"
-                    width="100%" loading="lazy">
-                <figcaption>insertImage-04 : légende de type “Figure” insérée.</figcaption>
-            </figure>
-
-            <div class="callout">
-                <strong>Astuces qualité :</strong>
-                <ul>
-                    <li>La légende doit être <em>associée</em> à l’image (commande de légende), pas un simple paragraphe
-                        saisi.</li>
-                    <li>Gardez un intitulé concis et pertinent.</li>
-                    <li>Si la numérotation est visible, laissez Word la gérer automatiquement.</li>
-                </ul>
-            </div>
-        </section>
-
-        <section id="verification" class="card" aria-labelledby="h-verification">
-            <h2 id="h-verification">Vérifier votre travail</h2>
-            <ol>
-                <li>Revenez sur la page du complément : <a href="./insertImage.html">insertImage.html</a>.</li>
-                <li>Cliquez sur <kbd>Tester l’exercice</kbd>.</li>
-                <li>Si tout est correct, l’icône passe de <span aria-label="échec">❌</span> à <span aria-label="réussi"
-                        style="color:var(--ok)">✔️</span>.</li>
-            </ol>
-            <p class="note">Selon le navigateur, l’état de réussite peut être gardé dans le <em>localStorage</em> pour
-                cette machine.</p>
-            <div class="btnbar">
-                <a class="btn ok" href="./insertImage.html">Ouvrir insertImage.html</a>
-                <a class="btn" href="https://github.com/votrepseudo/EssaiAddin01/blob/main/manifest.xml">Télécharger
-                    manifest.xml</a>
-            </div>
-        </section>
-
-        <section id="faq" class="card" aria-labelledby="h-faq">
-            <h2 id="h-faq">FAQ — Problèmes courants</h2>
-            <h3>Le bouton de test reste sur ❌</h3>
-            <ul>
-                <li>L’image est-elle bien insérée <em>sous</em> la ligne d’emplacement ?</li>
-                <li>La légende a-t-elle été ajoutée via la <em>commande</em> de légende (et non tapée à la main) ?</li>
-                <li>La légende est-elle directement associée à l’image sélectionnée ?</li>
-            </ul>
-
-            <h3>Je ne trouve pas “Insérer une légende” dans Word Web</h3>
-            <p>Ouvrez le document dans Word Bureau et utilisez <kbd>Références</kbd> → <kbd>Insérer une légende</kbd>.
-            </p>
-
-            <h3>Le complément ne se charge pas / l’URL ne correspond pas</h3>
-            <ul>
-                <li>Vérifiez que le <strong>manifest.xml</strong> de la branche <strong>main</strong> pointe bien vers
-                    la page GitHub Pages.</li>
-                <li>Après mise à jour, attendez quelques minutes que GitHub Pages déploie <code>docs/</code>.</li>
+                <li>
+                    <img
+                        src="https://github.com/Eichenbergerr/EssaiAddin01/blob/main/docs/assets/ChargerUnComplement.png">
+                </li>
             </ul>
         </section>
 
