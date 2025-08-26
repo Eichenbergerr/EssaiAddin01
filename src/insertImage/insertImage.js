@@ -40,27 +40,42 @@ async function getOrCreateImagePlaceholder(context) {
   return cc;
 }
 
-async function getFirstNonEmptyParagraphAfter(context, cc) {
-  const afterRange = cc.getRange(Word.RangeLocation.after);
-  const paras = afterRange.paragraphs;
+async function findCaptionParagraphInCC(context, cc) {
+  const r = cc.getRange();
+  const paras = r.paragraphs;
   paras.load("items");
   await context.sync();
 
   if (!paras.items || paras.items.length === 0) return null;
+
+  // Charge texte + alignement (compat large, pas de styleBuiltIn ici)
   for (const p of paras.items) p.load("text,alignment");
   await context.sync();
 
+  // 1) Cherche une vraie "Figure X ..."
   for (const p of paras.items) {
-    if (p.text && p.text.trim().length > 0) return p;
+    const t = (p.text || "").trim();
+    if (t && isCaptionText(t)) return p;
   }
+
+  // 2) Fallback: premier paragraphe non vide après l'image (souvent la légende
+  // par défaut "Figure 1")
+  for (const p of paras.items) {
+    const t = (p.text || "").trim();
+    if (t.length > 0) return p;
+  }
+
   return null;
 }
 
+
 function isCaptionText(text) {
   if (!text) return false;
-  const re = new RegExp(`^${WEX.EXPECTED_CAPTION_PREFIX}\\s*\\d+\\s*:\\s*.+`, "i");
+  // "Figure 1" ou "Figure 1 : ..." / "Figure 1 - ..." (espaces et ponctuation optionnels)
+  const re = /^\s*Figure\s*\d+(\s*[:\-–—]\s*.*)?\s*$/i;
   return re.test(text.trim());
 }
+
 
 async function getNextFigureNumber(context) {
   const paras = context.document.body.paragraphs;
@@ -85,29 +100,51 @@ function isCentered(para) {
   return para.alignment === "Centered" || para.alignment === Word.Alignment.centered;
 }
 
-/* ==============
-   Initialisation
-   ============== */
-async function initDoc() {
+// --- UI de confirmation ---
+function showClearConfirm() {
+  const box = document.getElementById("confirm-clear");
+  if (!box) return;
+  box.style.display = "block";
+
+  // attache les boutons une seule fois
+  if (!window.__CLEAR_CONFIRM_WIRED__) {
+    window.__CLEAR_CONFIRM_WIRED__ = true;
+
+    const yes = document.getElementById("btn-clear-yes");
+    const no = document.getElementById("btn-clear-no");
+
+    if (yes) yes.onclick = () => {
+      hideClearConfirm();
+      initDocConfirmed(true);   // -> efface puis initialise
+    };
+    if (no) no.onclick = () => {
+      hideClearConfirm();
+      showReport(line(false, "Initialisation annulée (doc non vide)."));
+    };
+  }
+}
+
+function hideClearConfirm() {
+  const box = document.getElementById("confirm-clear");
+  if (box) box.style.display = "none";
+}
+
+// --- corps d'initialisation une fois qu'on sait si on efface ou pas ---
+async function initDocConfirmed(withClear) {
   if (__busyInit) return;
   __busyInit = true;
   try {
     await Word.run(async (context) => {
       const body = context.document.body;
-      body.load("text");
-      await context.sync();
 
-      if (body.text.trim().length > 0) {
-        const ok = confirm("Le document contient déjà du texte. Voulez-vous tout effacer ?");
-        if (!ok) {
-          showReport(line(false, "Initialisation annulée (doc non vide)."));
-          return;
-        }
-        body.clear();
+      if (withClear) {
+        body.clear(); // efface tout
       }
 
+      // (le reste est identique à ton init : titre, consignes, placeholder…)
       const title = body.insertParagraph("Exercice : Image + Légende centrée", Word.InsertLocation.start);
-      title.styleBuiltIn = Word.BuiltInStyleName.title;
+      try { title.styleBuiltIn = Word.BuiltInStyleName.title; } catch (_) { }
+
       body.insertParagraph("", Word.InsertLocation.end);
       body.insertParagraph(
         "Objectif : Insérez une image à l’emplacement indiqué, ajoutez une légende sous l’image, " +
@@ -116,7 +153,8 @@ async function initDoc() {
       );
 
       const h2 = body.insertParagraph("Consignes détaillées :", Word.InsertLocation.end);
-      h2.styleBuiltIn = Word.BuiltInStyleName.heading2;
+      try { h2.styleBuiltIn = Word.BuiltInStyleName.heading2; } catch (_) { }
+
       [
         "1) Insérer une image à l’emplacement indiqué ci-dessous.",
         "2) Ajouter une légende sous l’image (Références > Insérer une légende, ou via le bouton du complément).",
@@ -145,70 +183,36 @@ async function initDoc() {
   }
 }
 
-/* ==================
-   Ajouter la légende
-   ================== */
-async function addCaption() {
-  if (__busyCaption) return;
-  __busyCaption = true;
+
+/* ==============
+   Initialisation
+   ============== */
+async function initDoc() {
+  if (__busyInit) return;
+  __busyInit = true;
   try {
     await Word.run(async (context) => {
-      // 1) Récupérer l’emplacement
-      const ccs = context.document.contentControls;
-      ccs.load("items");
+      const body = context.document.body;
+      body.load("text");
       await context.sync();
 
-      const cc = ccs.items.find((c) => c.title === WEX.PLACEHOLDER_TITLE);
-      if (!cc) {
-        showReport(line(false, `Emplacement image introuvable (« ${WEX.PLACEHOLDER_TITLE} »).`));
+      if (body.text.trim().length > 0) {
+        // doc non vide -> on montre la bannière Oui/Non dans le panneau
+        __busyInit = false;         // on relâche pour autoriser le clic sur Oui/Non
+        showClearConfirm();
         return;
       }
-
-      // 2) Vérifier qu’une image est bien dans le CC
-      const ccRange = cc.getRange();
-      const pics = ccRange.inlinePictures; // OK: propriété existante sur Range
-      pics.load("items");
-      await context.sync();
-
-      const hasImage = pics.items && pics.items.length > 0;
-      if (!hasImage) {
-        showReport(line(false, "Aucune image trouvée dans l’emplacement. Insère d’abord l’image."));
-        return;
-      }
-
-      // 3) Numéro de figure + description depuis le panneau
-      const nextNum = await getNextFigureNumber(context);
-      let desc = (document.getElementById("caption-desc")?.value || "").trim();
-      if (!desc) desc = "Description";
-
-      const captionText = `${WEX.EXPECTED_CAPTION_PREFIX} ${nextNum} : ${desc}`;
-
-      // 4) S’il existe déjà une légende non vide juste après -> remplacer, sinon insérer après le CC
-      let legendPara = await getFirstNonEmptyParagraphAfter(context, cc);
-
-      if (legendPara && isCaptionText(legendPara.text)) {
-        legendPara.insertText(captionText, "Replace");
-      } else {
-        // ✅ Insère directement APRÈS le content control (plus fiable que via afterRange.start)
-        legendPara = cc.insertParagraph(captionText, Word.InsertLocation.after);
-      }
-
-      // 5) Centrage (utilise l’enum officiel)
-      legendPara.alignment = Word.Alignment.centered;
-
-      // (Optionnel) Si tu veux quand même tenter d’appliquer le style intégré quand supporté :
-      // if (Office.context.requirements.isSetSupported('WordApi', '1.3')) {
-      //   try { legendPara.styleBuiltIn = Word.BuiltInStyleName.caption; } catch (_) {}
-      // }
-
-      await context.sync();
-      showReport(line(true, `Légende ajoutée : « ${captionText} » (centrée).`));
     });
+
+    // doc vide -> on initialise directement (sans effacer)
+    if (!__busyInit) return;        // si on a montré la bannière, on s'arrête ici
+    __busyInit = false;
+    await initDocConfirmed(false);
+
   } catch (err) {
     console.error(err);
-    showReport(line(false, "Erreur pendant l’ajout de la légende : " + err.message));
-  } finally {
-    __busyCaption = false;
+    showReport(line(false, "Erreur pendant l’initialisation : " + err.message));
+    __busyInit = false;
   }
 }
 
@@ -242,7 +246,7 @@ async function validateDoc() {
       const hasImage = pics.items && pics.items.length > 0;
       results.push(line(hasImage, hasImage ? "Image détectée à l’emplacement prévu." : "Aucune image insérée."));
 
-      const legendPara = await getFirstNonEmptyParagraphAfter(context, cc);
+      const legendPara = await findCaptionParagraphInCC(context, cc);
       if (!legendPara) {
         results.push(line(false, "Aucune légende détectée sous l’image."));
         showReport(results.join(""));
@@ -302,7 +306,7 @@ Office.onReady(() => {
   const btnValidate = document.getElementById("btn-validate");
 
   if (btnInit) btnInit.onclick = initDoc;
-  if (btnCaption) btnCaption.onclick = addCaption;
+  //if (btnCaption) btnCaption.onclick = addCaption;
   if (btnValidate) btnValidate.onclick = validateDoc;
 });
 
